@@ -1,5 +1,5 @@
 <template>
-  <div class="graph-container" @click="handleClick" @mousemove="updateTempLine" @mouseup="endConnection">
+  <div class="graph-container" @dblclick="handleClick" @mousemove="updateTempLine" @mouseup="endConnection">
     <svg class="canvas-svg">
       <defs>
         <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -152,12 +152,14 @@ export default {
 
 <style>
 .graph-container {
-  width: 100%;
-  height: calc(100vh - 50px);
+  width: calc(100vw - 400px); 
+  height: calc(100vh - 40px); 
   background: white;
+  border: 5px solid black;
   position: relative;
+  margin: 20px auto; 
+  box-sizing: border-box; 
 }
-
 .canvas-svg {
   width: 100%;
   height: 100%;
