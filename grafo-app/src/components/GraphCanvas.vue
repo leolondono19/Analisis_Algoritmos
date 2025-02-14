@@ -78,8 +78,7 @@ export default {
 
       this.nodes.push({
         id: this.nodeCounter,
-        x,
-        y,
+        x, y,
         name: this.nodeCounter.toString(),
         color: 'blue'
       });
@@ -134,14 +133,25 @@ export default {
     openNodeMenu(node) {
       this.selectedNode = node;
       this.$nextTick(() => {
-        this.$refs.nodeModal.openModal();
+        if (this.$refs.nodeModal) {
+          this.$refs.nodeModal.openModal();
+        }
       });
     },
     updateNode(updatedData) {
-      if (this.selectedNode) {
-        this.selectedNode.name = updatedData.name;
-        this.selectedNode.color = updatedData.color;
+      if(!this.selectedNode) {
+        console.error("No hay un nodo seleccionado.");
+        return;
       }
+      const index = this.nodes.findIndex(n => n.id === this.selectedNode.id);
+      if (index !== -1) {
+        this.nodes[index].name = updatedData.name;
+        this.nodes[index].color = updatedData.color;
+      }
+
+      //limpia selectedNode despues de actualizar
+      this.selectedNode = null;
+
     },
     debugEdge(edge) {
       console.log("Camino seleccionado:", edge);
