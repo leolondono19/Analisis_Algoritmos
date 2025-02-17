@@ -131,7 +131,7 @@ export default {
       this.selectedNode = null;
     },
     openNodeMenu(node) {
-      this.selectedNode = node;
+      this.selectedNode = {...node};
       this.$nextTick(() => {
         if (this.$refs.nodeModal) {
           this.$refs.nodeModal.openModal();
@@ -139,19 +139,23 @@ export default {
       });
     },
     updateNode(updatedData) {
-      if(!this.selectedNode) {
+      if (!this.selectedNode) {
         console.error("No hay un nodo seleccionado.");
         return;
       }
+
       const index = this.nodes.findIndex(n => n.id === this.selectedNode.id);
       if (index !== -1) {
-        this.nodes[index].name = updatedData.name;
-        this.nodes[index].color = updatedData.color;
+        this.nodes[index] = {
+          ...this.nodes[index], // Mantener otras propiedades
+          name: updatedData.name,
+          color: updatedData.color,
+        };
+      } else {
+        console.error("El nodo no fue encontrado en la lista.");
       }
 
-      //limpia selectedNode despues de actualizar
-      this.selectedNode = null;
-
+      this.selectedNode = null; // Limpiar selección después de actualizar
     },
     debugEdge(edge) {
       console.log("Camino seleccionado:", edge);

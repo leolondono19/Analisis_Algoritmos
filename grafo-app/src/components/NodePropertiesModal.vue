@@ -39,7 +39,7 @@ export default {
       immediate: true,
       handler(newNode) {
         if (newNode) {
-          this.nodeName = newNode.name;
+          this.nodeName = newNode.name || "";
           this.nodeColor = newNode.color.startsWith("#") ? newNode.color : "#000000";
         }
       }
@@ -47,6 +47,7 @@ export default {
   },
   methods: {
     saveChanges() {
+      console.log("Guardando cambios:", this.nodeName, this.nodeColor);
       this.$emit('save', { name: this.nodeName, color: this.nodeColor });
       this.closeModal();
     },
