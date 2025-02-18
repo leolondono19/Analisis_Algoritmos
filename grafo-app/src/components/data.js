@@ -27,6 +27,28 @@ const configs = defineConfigs({
     selectable: true,
     normal: {
       width: 3,
+      color: "#4466cc",
+      dasharray: "0",
+    },
+    marker: {
+      source: {
+        type: "none", // Opciones: none, arrow, angle, circle, custom
+        width: 6,
+        height: 6,
+        margin: 0,
+        offset: 0,
+        color: null, // Usa el color del camino
+        units: "strokeWidth",
+      },
+      target: {
+        type: "arrow", // Opciones: none, arrow, angle, circle, custom
+        width: 6,
+        height: 6,
+        margin: 0,
+        offset: 0,
+        color: null, // Usa el color del camino
+        units: "strokeWidth",
+      },
     },
   },
 });
