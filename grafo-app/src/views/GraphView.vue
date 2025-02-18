@@ -1,6 +1,9 @@
 <script setup>
-import { reactive, ref } from "vue";
+import { reactive, ref, defineProps } from "vue";
 import data from "../components/data";
+
+// Recibir configuración desde App.vue
+const props = defineProps(["configs"]);
 
 // Crear nodos y caminos de manera reactiva
 const nodes = reactive({ ...data.nodes });
@@ -69,7 +72,7 @@ function removeEdge() {
       :nodes="nodes"
       :edges="edges"
       :layouts="data.layouts"
-      :configs="data.configs"
+      :configs="props.configs"
       class="graph"
     />
   </div>
@@ -83,9 +86,10 @@ function removeEdge() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: white; /* Fondo del área del grafo */
-  border-radius: 10px; /* Bordes redondeados */
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); /* Sombra */
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  position: relative;
 }
 
 .controls {
