@@ -1,5 +1,3 @@
-// Codigo experimental para importar y exportar sin afectar el resto de Codigo
-
 <script setup>
 import { reactive, ref, watch, onMounted } from "vue";
 import * as vNG from "v-network-graph";
@@ -11,11 +9,11 @@ const configs = reactive(
   vNG.defineConfigs({
     node: {
       selectable: true, // Permitir selección de nodos
-      label:{
+      label: {
         visible: true,
         direction: "south",
         directionAutoAdjustment: true,
-      }
+      },
     },
     edge: {
       selectable: true, // Permitir selección de caminos
@@ -79,12 +77,22 @@ function removeNode() {
   selectedNodes.value = [];
 }
 
-// 🚀 Añadir caminos entre dos nodos seleccionados
+// 🚀 Añadir caminos entre nodos seleccionados (incluye self-loop)
 function addEdge() {
-  if (selectedNodes.value.length !== 2) return;
-  const [source, target] = selectedNodes.value;
+  if (selectedNodes.value.length === 0 || selectedNodes.value.length > 2) return;
+
   const edgeId = `edge${nextEdgeIndex.value}`;
-  edges[edgeId] = { source, target };
+
+  if (selectedNodes.value.length === 1) {
+    // Crear un self-loop si solo hay un nodo seleccionado
+    const node = selectedNodes.value[0];
+    edges[edgeId] = { source: node, target: node };
+  } else {
+    // Crear camino normal entre dos nodos
+    const [source, target] = selectedNodes.value;
+    edges[edgeId] = { source, target };
+  }
+
   nextEdgeIndex.value++;
 }
 
@@ -162,7 +170,9 @@ watch(selectedNodes, () => {
         </div>
         <div>
           <label>Camino:</label>
-          <button :disabled="selectedNodes.length !== 2" @click="addEdge">Añadir</button>
+          <button :disabled="selectedNodes.length === 0 || selectedNodes.length > 2" @click="addEdge">
+            Añadir
+          </button>
           <button :disabled="selectedEdges.length === 0" @click="removeEdge">Eliminar</button>
         </div>
         <div>
