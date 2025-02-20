@@ -11,6 +11,11 @@ const configs = reactive(
   vNG.defineConfigs({
     node: {
       selectable: true, // Permitir selección de nodos
+      label:{
+        visible: true,
+        direction: "south",
+        directionAutoAdjustment: true,
+      }
     },
     edge: {
       selectable: true, // Permitir selección de caminos
