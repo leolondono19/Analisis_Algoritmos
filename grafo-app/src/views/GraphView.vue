@@ -33,7 +33,19 @@
         :layouts="data.layouts"
         :configs="configs"
         class="graph"
-      />
+        >
+          <!-- Usar el slot edge-label para mostrar el peso -->
+          <template #edge-label="{ edge, ...slotProps }">
+            <vNG.VEdgeLabel
+              :text="edge.weight !== undefined ? `Peso: ${edge.weight}` : ''"
+              align="center"
+              vertical-align="above"
+              v-bind="slotProps"
+            />
+          </template>
+
+      </v-network-graph>
+      
        <!-- Visor de PDF -->
       <PdfViewer />
     </div>
@@ -284,7 +296,14 @@ function closeEditEdgeModal() {
 // Guardar el nuevo peso de la arista
 function saveEdgeWeight() {
   if (editingEdgeId.value && editingEdgeWeight.value !== null) {
-    edges[editingEdgeId.value].weight = Number(editingEdgeWeight.value); // Actualizar el peso de la arista
+    // Crear un nuevo objeto edges con el peso actualizado
+    edges[editingEdgeId.value] = {
+      ...edges[editingEdgeId.value], // Copiar las propiedades existentes
+      weight: Number(editingEdgeWeight.value), // Establecer el nuevo peso
+    };
+
+    //Forzar la reactividad
+    edges = {...edges}
     closeEditEdgeModal(); // Cerrar el modal después de guardar
   }
 }
