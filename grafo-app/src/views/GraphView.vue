@@ -1,10 +1,12 @@
+// Codigo experimental para importar y exportar sin afectar el resto de Codigo
+
 <script setup>
 import { reactive, ref, watch, onMounted } from "vue";
 import * as vNG from "v-network-graph";
 import data from "../components/data";
 import EdgeMarkerConfig from "../components/EdgeMarkerConfig.vue";
 
-// Definimos la configuración inicial del grafo
+// Configuración del grafo
 const configs = reactive(
   vNG.defineConfigs({
     node: {
@@ -36,7 +38,7 @@ const configs = reactive(
   })
 );
 
-// Nodos y caminos reactivos
+// Datos del grafo (reactivos)
 const nodes = reactive({ ...data.nodes });
 const edges = reactive({ ...data.edges });
 
@@ -46,7 +48,7 @@ const nextEdgeIndex = ref(Object.keys(edges).length + 1);
 const selectedNodes = ref([]);
 const selectedEdges = ref([]);
 
-// 🚀 Función para añadir un nodo en la posición clickeada
+// 🚀 Añadir nodo en la posición clickeada
 function addNode(event) {
   const nodeId = `node${nextNodeIndex.value}`;
   nodes[nodeId] = {
@@ -57,7 +59,7 @@ function addNode(event) {
   nextNodeIndex.value++;
 }
 
-// ❌ Función para eliminar nodos seleccionados
+// ❌ Eliminar nodos seleccionados
 function removeNode() {
   for (const nodeId of selectedNodes.value) {
     delete nodes[nodeId];
@@ -72,7 +74,7 @@ function removeNode() {
   selectedNodes.value = [];
 }
 
-// 🚀 Función para añadir caminos entre dos nodos seleccionados
+// 🚀 Añadir caminos entre dos nodos seleccionados
 function addEdge() {
   if (selectedNodes.value.length !== 2) return;
   const [source, target] = selectedNodes.value;
@@ -81,12 +83,46 @@ function addEdge() {
   nextEdgeIndex.value++;
 }
 
-// ❌ Función para eliminar caminos seleccionados
+// ❌ Eliminar caminos seleccionados
 function removeEdge() {
   for (const edgeId of selectedEdges.value) {
     delete edges[edgeId];
   }
   selectedEdges.value = [];
+}
+
+// 🔄 Exportar el grafo a un archivo JSON
+function exportGraph() {
+  const graphData = JSON.stringify({ nodes, edges }, null, 2);
+  const blob = new Blob([graphData], { type: "application/json" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "grafo.json";
+  link.click();
+}
+
+// 📂 Importar un archivo JSON para cargar un grafo
+function importGraph(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const importedData = JSON.parse(e.target.result);
+      Object.keys(nodes).forEach((key) => delete nodes[key]); // Limpiar nodos actuales
+      Object.keys(edges).forEach((key) => delete edges[key]); // Limpiar caminos actuales
+
+      Object.assign(nodes, importedData.nodes); // Cargar nodos desde JSON
+      Object.assign(edges, importedData.edges); // Cargar caminos desde JSON
+
+      nextNodeIndex.value = Object.keys(nodes).length + 1;
+      nextEdgeIndex.value = Object.keys(edges).length + 1;
+    } catch (error) {
+      alert("Error al importar el archivo. Verifique el formato JSON.");
+    }
+  };
+  reader.readAsText(file);
 }
 
 // ⚡ Habilitar selección múltiple con Shift
@@ -124,6 +160,11 @@ watch(selectedNodes, () => {
           <button :disabled="selectedNodes.length !== 2" @click="addEdge">Añadir</button>
           <button :disabled="selectedEdges.length === 0" @click="removeEdge">Eliminar</button>
         </div>
+        <div>
+          <label>Guardar/Cargar:</label>
+          <button @click="exportGraph">Exportar</button>
+          <input type="file" @change="importGraph" accept=".json" />
+        </div>
       </div>
 
       <!-- Grafo -->
@@ -155,14 +196,14 @@ watch(selectedNodes, () => {
   width: 100vw;
   height: 100vh;
   display: flex;
-  flex-direction: row; /* Grafo a la izquierda, configuración a la derecha */
+  flex-direction: row;
   background-color: white;
   border-radius: 10px;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .graph-content {
-  flex: 3; /* Más espacio para el grafo */
+  flex: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
