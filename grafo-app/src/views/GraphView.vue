@@ -34,6 +34,14 @@ const configs = reactive(
           color: null,
         },
       },
+      label: { // Configuración para mostrar etiquetas en las aristas
+        color: "#000000", // Color del texto
+        fontSize: 12, // Tamaño de la fuente
+        background: "#ffffff", // Fondo del texto
+        padding: 4, // Espaciado interno
+        borderRadius: 4, // Bordes redondeados
+        text: (edge) => edge.weight !== undefined ? `Peso: ${edge.weight}` : "", // Mostrar el peso si existe
+      },
     },
   })
 );
@@ -47,6 +55,15 @@ const nextEdgeIndex = ref(Object.keys(edges).length + 1);
 
 const selectedNodes = ref([]);
 const selectedEdges = ref([]);
+
+// Variables para editar el nombre del nodo
+const isEditModalOpen = ref(false);
+const editingNodeName = ref("");
+const editingNodeId = ref(null);
+
+const isEditEdgeModalOpen = ref(false); // Controla si el modal de edición de peso está abierto
+const editingEdgeWeight = ref(0); // Almacena el peso temporal de la arista
+const editingEdgeId = ref(null); // Almacena el ID de la arista que se está editando
 
 // 🚀 Añadir nodo en la posición clickeada
 function addNode(event) {
@@ -79,7 +96,7 @@ function addEdge() {
   if (selectedNodes.value.length !== 2) return;
   const [source, target] = selectedNodes.value;
   const edgeId = `edge${nextEdgeIndex.value}`;
-  edges[edgeId] = { source, target };
+  edges[edgeId] = { source, target, weight: 0 };
   nextEdgeIndex.value++;
 }
 
@@ -143,6 +160,61 @@ onMounted(() => {
 watch(selectedNodes, () => {
   selectedEdges.value = selectedEdges.value.filter((edgeId) => edges[edgeId]);
 });
+
+// Función para vaciar el grafo
+const clearGraph = () => {
+  Object.keys(nodes).forEach((key) => delete nodes[key]);
+  Object.keys(edges).forEach((key) => delete edges[key]);
+};
+
+// Abrir el modal de edición
+function openEditModal() {
+  if (selectedNodes.value.length === 1) {
+    editingNodeId.value = selectedNodes.value[0]; // Obtener el ID del nodo seleccionado
+    editingNodeName.value = nodes[editingNodeId.value].name; // Cargar el nombre actual del nodo
+    isEditModalOpen.value = true; // Abrir el modal
+  }
+}
+
+// Cerrar el modal de edición
+function closeEditModal() {
+  isEditModalOpen.value = false;
+  editingNodeName.value = "";
+  editingNodeId.value = null;
+}
+
+// Guardar el nuevo nombre del nodo
+function saveNodeName() {
+  if (editingNodeId.value && editingNodeName.value.trim() !== "") {
+    nodes[editingNodeId.value].name = editingNodeName.value.trim(); // Actualizar el nombre del nodo
+    closeEditModal(); // Cerrar el modal después de guardar
+  }
+}
+
+// Abrir el modal de edición de peso
+function openEditEdgeModal() {
+  if (selectedEdges.value.length === 1) {
+    editingEdgeId.value = selectedEdges.value[0]; // Obtener el ID de la arista seleccionada
+    editingEdgeWeight.value = edges[editingEdgeId.value].weight || 0; // Cargar el peso actual de la arista
+    isEditEdgeModalOpen.value = true; // Abrir el modal
+  }
+}
+
+// Cerrar el modal de edición de peso
+function closeEditEdgeModal() {
+  isEditEdgeModalOpen.value = false;
+  editingEdgeWeight.value = 0;
+  editingEdgeId.value = null;
+}
+
+// Guardar el nuevo peso de la arista
+function saveEdgeWeight() {
+  if (editingEdgeId.value && editingEdgeWeight.value !== null) {
+    edges[editingEdgeId.value].weight = Number(editingEdgeWeight.value); // Actualizar el peso de la arista
+    closeEditEdgeModal(); // Cerrar el modal después de guardar
+  }
+}
+
 </script>
 
 <template>
@@ -151,14 +223,19 @@ watch(selectedNodes, () => {
     <div class="graph-content">
       <div class="controls">
         <div>
+          <button @click="clearGraph">Vaciar</button>
+        </div>
+        <div>
           <label>Nodo:</label>
           <button @click="addNode">Añadir</button>
           <button :disabled="selectedNodes.length === 0" @click="removeNode">Eliminar</button>
+          <button :disabled="selectedNodes.length !== 1" @click="openEditModal">Editar</button>
         </div>
         <div>
           <label>Camino:</label>
           <button :disabled="selectedNodes.length !== 2" @click="addEdge">Añadir</button>
           <button :disabled="selectedEdges.length === 0" @click="removeEdge">Eliminar</button>
+          <button :disabled="selectedEdges.length !== 1" @click="openEditEdgeModal">Editar Peso</button>
         </div>
         <div>
           <label>Guardar/Cargar:</label>
@@ -187,6 +264,24 @@ watch(selectedNodes, () => {
 
       <h4>Fin (Target)</h4>
       <EdgeMarkerConfig v-model:marker="configs.edge.marker.target" />
+    </div>
+    <!-- Modal para editar el nombre del nodo -->
+    <div v-if="isEditModalOpen" class="modal">
+      <div class="modal-content">
+        <h3>Editar Nombre del Nodo</h3>
+        <input v-model="editingNodeName" type="text" placeholder="Nuevo nombre" />
+        <button @click="saveNodeName">Guardar</button>
+        <button @click="closeEditModal">Cancelar</button>
+      </div>
+    </div>
+    <!-- Modal para editar el peso de la arista -->
+    <div v-if="isEditEdgeModalOpen" class="modal">
+      <div class="modal-content">
+        <h3>Editar Peso del Camino</h3>
+        <input v-model="editingEdgeWeight" type="number" placeholder="Nuevo peso" />
+        <button @click="saveEdgeWeight">Guardar</button>
+        <button @click="closeEditEdgeModal">Cancelar</button>
+      </div>
     </div>
   </div>
 </template>
@@ -229,5 +324,31 @@ watch(selectedNodes, () => {
   border-left: 2px solid #ccc;
   padding: 20px;
   overflow-y: auto;
+}
+
+/* Estilos para el modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content input {
+  margin-bottom: 10px;
+  padding: 5px;
+  width: 100%;
 }
 </style>
