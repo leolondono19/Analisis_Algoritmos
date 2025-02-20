@@ -1,62 +1,56 @@
-<!-- EdgeMarkerConfig.vue Basico pero el codigo funciona-->
 <script setup>
-import { defineProps, defineEmits, reactive, watch } from "vue";
-import { ElTabs, ElTabPane } from "element-plus";
+import { defineProps, defineEmits } from "vue";
 
-// Recibir la configuración desde App.vue
-const props = defineProps(["markerConfig"]);
-const emit = defineEmits(["update"]);
-
-// Crear una copia reactiva de los valores para evitar modificar `props` directamente
-const localConfigs = reactive({
-  source: { ...props.markerConfig.source },
-  target: { ...props.markerConfig.target },
+const props = defineProps({
+  marker: Object, // Recibe la configuración del marcador (source o target)
 });
 
-// Sincronizar cambios con `props.markerConfig` cuando cambie
-watch(
-  () => props.markerConfig,
-  (newVal) => {
-    if (newVal) {
-      localConfigs.source = { ...newVal.source };
-      localConfigs.target = { ...newVal.target };
-    }
-  },
-  { deep: true, immediate: true }
-);
-
-// Emitir cambios cuando se edita la configuración
-function updateMarkerConfig(target, key, value) {
-  emit("update", target, { key, value });
-}
+const emit = defineEmits(["update:marker"]);
 </script>
 
 <template>
-  <div class="edge-marker-config">
-    <el-tabs type="border-card">
-      <el-tab-pane label="Marker">
-        <div>
-          <label>Source Arrow Size:</label>
-          <input type="number" v-model="localConfigs.source.width" @input="updateMarkerConfig('source', 'width', localConfigs.source.width)" />
-          <input type="number" v-model="localConfigs.source.height" @input="updateMarkerConfig('source', 'height', localConfigs.source.height)" />
-        </div>
-        <div>
-          <label>Target Arrow Size:</label>
-          <input type="number" v-model="localConfigs.target.width" @input="updateMarkerConfig('target', 'width', localConfigs.target.width)" />
-          <input type="number" v-model="localConfigs.target.height" @input="updateMarkerConfig('target', 'height', localConfigs.target.height)" />
-        </div>
-      </el-tab-pane>
-    </el-tabs>
+  <div class="marker-config">
+    <label>Tipo:</label>
+    <select v-model="props.marker.type" @change="emit('update:marker', props.marker)">
+      <option value="none">Ninguno</option>
+      <option value="arrow">Flecha</option>
+      <option value="angle">Ángulo</option>
+      <option value="circle">Círculo</option>
+      <option value="custom">Personalizado</option>
+    </select>
+
+    <label>Ancho:</label>
+    <input type="number" v-model="props.marker.width" @input="emit('update:marker', props.marker)" />
+
+    <label>Alto:</label>
+    <input type="number" v-model="props.marker.height" @input="emit('update:marker', props.marker)" />
+
+    <label>Margen:</label>
+    <input type="number" v-model="props.marker.margin" @input="emit('update:marker', props.marker)" />
+
+    <label>Offset:</label>
+    <input type="number" v-model="props.marker.offset" @input="emit('update:marker', props.marker)" />
+
+    <label>Color:</label>
+    <input type="color" v-model="props.marker.color" @input="emit('update:marker', props.marker)" />
+
+    <label>Unidad:</label>
+    <select v-model="props.marker.units" @change="emit('update:marker', props.marker)">
+      <option value="strokeWidth">Stroke Width</option>
+      <option value="userSpaceOnUse">User Space On Use</option>
+    </select>
   </div>
 </template>
 
-<style>
-.edge-marker-config {
-  width: 100%;
-  background: white;
-  padding: 10px;
-  border-bottom: 1px solid #ccc;
+<style scoped>
+.marker-config {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+}
+
+label {
+  font-weight: bold;
+  margin-top: 5px;
 }
 </style>

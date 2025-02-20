@@ -1,11 +1,42 @@
 <script setup>
-import { reactive, ref, defineProps } from "vue";
+import { reactive, ref, watch, onMounted } from "vue";
+import * as vNG from "v-network-graph";
 import data from "../components/data";
+import EdgeMarkerConfig from "../components/EdgeMarkerConfig.vue";
 
-// Recibir configuración desde App.vue
-const props = defineProps(["configs"]);
+// Definimos la configuración inicial del grafo
+const configs = reactive(
+  vNG.defineConfigs({
+    node: {
+      selectable: true, // Permitir selección de nodos
+    },
+    edge: {
+      selectable: true, // Permitir selección de caminos
+      marker: {
+        source: {
+          type: "none",
+          width: 4,
+          height: 4,
+          margin: -1,
+          offset: 0,
+          units: "strokeWidth",
+          color: null,
+        },
+        target: {
+          type: "arrow",
+          width: 4,
+          height: 4,
+          margin: -1,
+          offset: 0,
+          units: "strokeWidth",
+          color: null,
+        },
+      },
+    },
+  })
+);
 
-// Crear nodos y caminos de manera reactiva
+// Nodos y caminos reactivos
 const nodes = reactive({ ...data.nodes });
 const edges = reactive({ ...data.edges });
 
@@ -15,23 +46,33 @@ const nextEdgeIndex = ref(Object.keys(edges).length + 1);
 const selectedNodes = ref([]);
 const selectedEdges = ref([]);
 
-// Función para añadir nodos
-function addNode() {
+// 🚀 Función para añadir un nodo en la posición clickeada
+function addNode(event) {
   const nodeId = `node${nextNodeIndex.value}`;
-  const name = `N${nextNodeIndex.value}`;
-  nodes[nodeId] = { name };
+  nodes[nodeId] = {
+    name: `N${nextNodeIndex.value}`,
+    x: event?.offsetX || Math.random() * 500,
+    y: event?.offsetY || Math.random() * 500,
+  };
   nextNodeIndex.value++;
 }
 
-// Función para eliminar nodos seleccionados
+// ❌ Función para eliminar nodos seleccionados
 function removeNode() {
   for (const nodeId of selectedNodes.value) {
     delete nodes[nodeId];
+
+    // Eliminar caminos relacionados con el nodo eliminado
+    Object.keys(edges).forEach((edgeId) => {
+      if (edges[edgeId].source === nodeId || edges[edgeId].target === nodeId) {
+        delete edges[edgeId];
+      }
+    });
   }
   selectedNodes.value = [];
 }
 
-// Función para añadir caminos entre dos nodos seleccionados
+// 🚀 Función para añadir caminos entre dos nodos seleccionados
 function addEdge() {
   if (selectedNodes.value.length !== 2) return;
   const [source, target] = selectedNodes.value;
@@ -40,66 +81,112 @@ function addEdge() {
   nextEdgeIndex.value++;
 }
 
-// Función para eliminar caminos seleccionados
+// ❌ Función para eliminar caminos seleccionados
 function removeEdge() {
   for (const edgeId of selectedEdges.value) {
     delete edges[edgeId];
   }
   selectedEdges.value = [];
 }
+
+// ⚡ Habilitar selección múltiple con Shift
+onMounted(() => {
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Shift") {
+      configs.node.selectable = "multiple";
+    }
+  });
+  window.addEventListener("keyup", (event) => {
+    if (event.key === "Shift") {
+      configs.node.selectable = true;
+    }
+  });
+});
+
+// ⚡ Sincronizar nodos y caminos al eliminar elementos
+watch(selectedNodes, () => {
+  selectedEdges.value = selectedEdges.value.filter((edgeId) => edges[edgeId]);
+});
 </script>
 
 <template>
   <div class="graph-container">
-    <!-- Controles para añadir y eliminar nodos y caminos -->
-    <div class="controls">
-      <div>
-        <label>Nodo:</label>
-        <button @click="addNode">Añadir</button>
-        <button :disabled="selectedNodes.length === 0" @click="removeNode">Eliminar</button>
+    <!-- Sección del grafo -->
+    <div class="graph-content">
+      <div class="controls">
+        <div>
+          <label>Nodo:</label>
+          <button @click="addNode">Añadir</button>
+          <button :disabled="selectedNodes.length === 0" @click="removeNode">Eliminar</button>
+        </div>
+        <div>
+          <label>Camino:</label>
+          <button :disabled="selectedNodes.length !== 2" @click="addEdge">Añadir</button>
+          <button :disabled="selectedEdges.length === 0" @click="removeEdge">Eliminar</button>
+        </div>
       </div>
-      <div>
-        <label>Camino:</label>
-        <button :disabled="selectedNodes.length !== 2" @click="addEdge">Añadir</button>
-        <button :disabled="selectedEdges.length === 0" @click="removeEdge">Eliminar</button>
-      </div>
+
+      <!-- Grafo -->
+      <v-network-graph
+        v-model:selected-nodes="selectedNodes"
+        v-model:selected-edges="selectedEdges"
+        :nodes="nodes"
+        :edges="edges"
+        :layouts="data.layouts"
+        :configs="configs"
+        class="graph"
+      />
     </div>
 
-    <!-- Grafo interactivo -->
-    <v-network-graph
-      v-model:selected-nodes="selectedNodes"
-      v-model:selected-edges="selectedEdges"
-      :nodes="nodes"
-      :edges="edges"
-      :layouts="data.layouts"
-      :configs="props.configs"
-      class="graph"
-    />
+    <!-- Panel de Configuración de Caminos -->
+    <div class="config-panel">
+      <h3>Configuración de Caminos</h3>
+      <h4>Inicio (Source)</h4>
+      <EdgeMarkerConfig v-model:marker="configs.edge.marker.source" />
+
+      <h4>Fin (Target)</h4>
+      <EdgeMarkerConfig v-model:marker="configs.edge.marker.target" />
+    </div>
   </div>
 </template>
 
-<style>
+<style scoped>
 .graph-container {
-  width: 90vw;
-  height: 80vh;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: row; /* Grafo a la izquierda, configuración a la derecha */
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.graph-content {
+  flex: 3; /* Más espacio para el grafo */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: white;
-  border-radius: 10px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-  position: relative;
+  padding: 20px;
 }
 
 .controls {
-  margin-bottom: 10px;
   display: flex;
-  gap: 10px;
+  gap: 15px;
+  margin-bottom: 15px;
 }
 
 .graph {
-  width: 90%;
+  width: 100%;
   height: 80vh;
+}
+
+/* Estilo para el panel de configuración */
+.config-panel {
+  flex: 1;
+  background-color: #f0f0f0;
+  border-left: 2px solid #ccc;
+  padding: 20px;
+  overflow-y: auto;
 }
 </style>

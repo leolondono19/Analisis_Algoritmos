@@ -4,6 +4,8 @@ import VNetworkGraph from "v-network-graph";
 import "v-network-graph/lib/style.css";
 import ElementPlus from "element-plus";
 import "element-plus/dist/index.full.js"
+import 'element-plus/dist/index.css'
+
 
 const app = createApp(App);
 

@@ -1,10 +1,5 @@
 <template>
   <div id="app">
-    <!-- Componente para configurar las flechas -->
-    <EdgeMarkerConfig 
-      :markerConfig="configs.edge.marker" 
-      @update="updateMarkerConfig"
-    />
 
     <!-- Componente del grafo -->
     <GraphView :configs="configs" />
