@@ -14,7 +14,7 @@
         </div>
         <div>
           <label>Camino:</label>
-          <button :disabled="selectedNodes.length !== 2" @click="addEdge">Añadir</button>
+          <button :disabled="selectedNodes.length === 0 || selectedNodes.length > 2" @click="addEdge">Añadir</button>
           <button :disabled="selectedEdges.length === 0" @click="removeEdge">Eliminar</button>
           <button :disabled="selectedEdges.length !== 1" @click="openEditEdgeModal">Editar Peso</button>
         </div>
@@ -122,6 +122,12 @@ const configs = reactive(
           color: null,
         },
       },
+      selfLoop: {
+        radius: 14,
+        offset: 10,
+        angle: 180,
+        isClockwise: true,
+      },
       label: { // Configuración para mostrar etiquetas en las aristas
         color: "#000000", // Color del texto
         fontSize: 12, // Tamaño de la fuente
@@ -179,13 +185,21 @@ function removeNode() {
   selectedNodes.value = [];
 }
 
-// 🚀 Añadir caminos entre dos nodos seleccionados
+// 🚀 Añadir caminos entre nodos seleccionados (modificado)
 function addEdge() {
-  if (selectedNodes.value.length !== 2) return;
-  const [source, target] = selectedNodes.value;
-  const edgeId = `edge${nextEdgeIndex.value}`;
-  edges[edgeId] = { source, target, weight: 0 };
-  nextEdgeIndex.value++;
+  if (selectedNodes.value.length === 1) {
+    // Crear un self-loop si un solo nodo está seleccionado
+    const node = selectedNodes.value[0];
+    const edgeId = `edge${nextEdgeIndex.value}`;
+    edges[edgeId] = { source: node, target: node, weight: 0 }; // source y target son el mismo nodo
+    nextEdgeIndex.value++;
+  } else if (selectedNodes.value.length === 2) {
+    // Crear un camino normal si dos nodos están seleccionados
+    const [source, target] = selectedNodes.value;
+    const edgeId = `edge${nextEdgeIndex.value}`;
+    edges[edgeId] = { source, target, weight: 0 };
+    nextEdgeIndex.value++;
+  }
 }
 
 // ❌ Eliminar caminos seleccionados
