@@ -7,7 +7,7 @@ import data from "../components/data";
 import EdgeMarkerConfig from "../components/EdgeMarkerConfig.vue";
 
 //vista pdf
-import PdfViewer from '@/components/PdfViewer.vue';
+import PdfViewer from '../components/PdfViewer.vue';
 
 export default {
   components: {
