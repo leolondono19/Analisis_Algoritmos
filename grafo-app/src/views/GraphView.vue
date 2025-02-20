@@ -1,4 +1,72 @@
-// Codigo experimental para importar y exportar sin afectar el resto de Codigo
+<template>
+  <div class="graph-container">
+    <!-- Sección del grafo -->
+    <div class="graph-content">
+      <div class="controls">
+        <div>
+          <button @click="clearGraph">Vaciar</button>
+        </div>
+        <div>
+          <label>Nodo:</label>
+          <button @click="addNode">Añadir</button>
+          <button :disabled="selectedNodes.length === 0" @click="removeNode">Eliminar</button>
+          <button :disabled="selectedNodes.length !== 1" @click="openEditModal">Editar</button>
+        </div>
+        <div>
+          <label>Camino:</label>
+          <button :disabled="selectedNodes.length !== 2" @click="addEdge">Añadir</button>
+          <button :disabled="selectedEdges.length === 0" @click="removeEdge">Eliminar</button>
+          <button :disabled="selectedEdges.length !== 1" @click="openEditEdgeModal">Editar Peso</button>
+        </div>
+        <div>
+          <label>Guardar/Cargar:</label>
+          <button @click="exportGraph">Exportar</button>
+          <input type="file" @change="importGraph" accept=".json" />
+        </div>
+      </div>
+      <!-- Grafo -->
+      <v-network-graph
+        v-model:selected-nodes="selectedNodes"
+        v-model:selected-edges="selectedEdges"
+        :nodes="nodes"
+        :edges="edges"
+        :layouts="data.layouts"
+        :configs="configs"
+        class="graph"
+      />
+       <!-- Visor de PDF -->
+      <PdfViewer />
+    </div>
+
+    <!-- Panel de Configuración de Caminos -->
+    <div class="config-panel">
+      <h3>Configuración de Caminos</h3>
+      <h4>Inicio (Source)</h4>
+      <EdgeMarkerConfig v-model:marker="configs.edge.marker.source" />
+
+      <h4>Fin (Target)</h4>
+      <EdgeMarkerConfig v-model:marker="configs.edge.marker.target" />
+    </div>
+    <!-- Modal para editar el nombre del nodo -->
+    <div v-if="isEditModalOpen" class="modal">
+      <div class="modal-content">
+        <h3>Editar Nombre del Nodo</h3>
+        <input v-model="editingNodeName" type="text" placeholder="Nuevo nombre" />
+        <button @click="saveNodeName">Guardar</button>
+        <button @click="closeEditModal">Cancelar</button>
+      </div>
+    </div>
+    <!-- Modal para editar el peso de la arista -->
+    <div v-if="isEditEdgeModalOpen" class="modal">
+      <div class="modal-content">
+        <h3>Editar Peso del Camino</h3>
+        <input v-model="editingEdgeWeight" type="number" placeholder="Nuevo peso" />
+        <button @click="saveEdgeWeight">Guardar</button>
+        <button @click="closeEditEdgeModal">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</template>
 
 <script setup>
 import * as vNG from "v-network-graph";
@@ -6,14 +74,9 @@ import { onMounted, reactive, ref, watch } from "vue";
 import data from "../components/data";
 import EdgeMarkerConfig from "../components/EdgeMarkerConfig.vue";
 
-//vista pdf
+// vista pdf
 import PdfViewer from '../components/PdfViewer.vue';
 
-export default {
-  components: {
-    PdfViewer
-  }
-};
 // Configuración del grafo
 const configs = reactive(
   vNG.defineConfigs({
@@ -141,9 +204,7 @@ function importGraph(event) {
     try {
       const importedData = JSON.parse(e.target.result);
       Object.keys(nodes).forEach((key) => delete nodes[key]); // Limpiar nodos actuales
-      Object.keys(edges).forEach((key) => delete edges[key]); // Limpiar caminos actuales
-
-      Object.assign(nodes, importedData.nodes); // Cargar nodos desde JSON
+      Object.keys(edges).forEach((key) => delete edges[key]); // Limpiar caminos actuales... Object.assign(nodes, importedData.nodes); // Cargar nodos desde JSON
       Object.assign(edges, importedData.edges); // Cargar caminos desde JSON
 
       nextNodeIndex.value = Object.keys(nodes).length + 1;
@@ -229,75 +290,6 @@ function saveEdgeWeight() {
 }
 
 </script>
-
-<template>
-  <div class="graph-container">
-    <!-- Sección del grafo -->
-    <div class="graph-content">
-      <div class="controls">
-        <div>
-          <button @click="clearGraph">Vaciar</button>
-        </div>
-        <div>
-          <label>Nodo:</label>
-          <button @click="addNode">Añadir</button>
-          <button :disabled="selectedNodes.length === 0" @click="removeNode">Eliminar</button>
-          <button :disabled="selectedNodes.length !== 1" @click="openEditModal">Editar</button>
-        </div>
-        <div>
-          <label>Camino:</label>
-          <button :disabled="selectedNodes.length !== 2" @click="addEdge">Añadir</button>
-          <button :disabled="selectedEdges.length === 0" @click="removeEdge">Eliminar</button>
-          <button :disabled="selectedEdges.length !== 1" @click="openEditEdgeModal">Editar Peso</button>
-        </div>
-        <div>
-          <label>Guardar/Cargar:</label>
-          <button @click="exportGraph">Exportar</button>
-          <input type="file" @change="importGraph" accept=".json" />
-        </div>
-      </div>
-
-      <!-- Grafo -->
-      <v-network-graph
-        v-model:selected-nodes="selectedNodes"
-        v-model:selected-edges="selectedEdges"
-        :nodes="nodes"
-        :edges="edges"
-        :layouts="data.layouts"
-        :configs="configs"
-        class="graph"
-      />
-    </div>
-
-    <!-- Panel de Configuración de Caminos -->
-    <div class="config-panel">
-      <h3>Configuración de Caminos</h3>
-      <h4>Inicio (Source)</h4>
-      <EdgeMarkerConfig v-model:marker="configs.edge.marker.source" />
-
-      <h4>Fin (Target)</h4>
-      <EdgeMarkerConfig v-model:marker="configs.edge.marker.target" />
-    </div>
-    <!-- Modal para editar el nombre del nodo -->
-    <div v-if="isEditModalOpen" class="modal">
-      <div class="modal-content">
-        <h3>Editar Nombre del Nodo</h3>
-        <input v-model="editingNodeName" type="text" placeholder="Nuevo nombre" />
-        <button @click="saveNodeName">Guardar</button>
-        <button @click="closeEditModal">Cancelar</button>
-      </div>
-    </div>
-    <!-- Modal para editar el peso de la arista -->
-    <div v-if="isEditEdgeModalOpen" class="modal">
-      <div class="modal-content">
-        <h3>Editar Peso del Camino</h3>
-        <input v-model="editingEdgeWeight" type="number" placeholder="Nuevo peso" />
-        <button @click="saveEdgeWeight">Guardar</button>
-        <button @click="closeEditEdgeModal">Cancelar</button>
-      </div>
-    </div>
-  </div>
-</template>
 
 <style scoped>
 .graph-container {
