@@ -1,11 +1,19 @@
 // Codigo experimental para importar y exportar sin afectar el resto de Codigo
 
 <script setup>
-import { reactive, ref, watch, onMounted } from "vue";
 import * as vNG from "v-network-graph";
+import { onMounted, reactive, ref, watch } from "vue";
 import data from "../components/data";
 import EdgeMarkerConfig from "../components/EdgeMarkerConfig.vue";
 
+//vista pdf
+import PdfViewer from '../components/PdfViewer.vue';
+
+export default {
+  components: {
+    PdfViewer
+  }
+};
 // Configuración del grafo
 const configs = reactive(
   vNG.defineConfigs({

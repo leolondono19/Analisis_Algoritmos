@@ -12,6 +12,7 @@
     "bootstrap": "^5.3.3",
     "dagre": "^0.8.5",
     "element-plus": "^2.9.4",
+    "grafo-app": "file:",
     "v-network-graph": "^0.9.18",
     "vue": "^3.5.13"
   },
